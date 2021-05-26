@@ -53,6 +53,17 @@ const setValue = (identifier, value) => {
   }
 };
 
+const deleteItem = (item) => {
+  console.log("item to delete", item);
+  const itemIndex = state.items.findIndex((i) => i.id === item);
+  if (itemIndex) {
+    const copiedItems = Array.from(state.items);
+    copiedItems.splice(itemIndex, 1);
+    state.items = copiedItems;
+    buildItemTable();
+  }
+};
+
 // convert function to arrow function
 // function add(x, y) {
 //   return x + y;
@@ -74,10 +85,12 @@ destructure();
 // lets look at map
 const buildItemTable = () => {
   let html =
-    '<table style="width: 100%; cell-padding: 2px;"><tr><th>Product</td><th>Size</th><th>Price</th><th>Category</th></tr>';
-  data.map((item) => {
+    '<table style="width: 100%; cell-padding: 2px;"><tr><th>Product</td><th>Size</th><th>Price</th><th>Category</th><th>Delete</th></tr>';
+  state.items.map((item) => {
     const { name, size, price, category } = item;
-    html += `<tr><td>${name}</td><td>${size}</td><td>${price}</td><td>${category}</td></tr>`;
+    html += `<tr><td>${name}</td><td>${size}</td><td>${price}</td><td>${category}</td><td style="cursor: pointer;" onclick="deleteItem(
+      ${item.id}
+    )">Trash</td></tr>`;
   });
   html += "</table";
   document.getElementById("items").innerHTML = html;
