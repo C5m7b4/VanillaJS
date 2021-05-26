@@ -6,7 +6,7 @@ const data = [
   { id: 1, name: "apple", price: 0.99, size: "each", category: "fruit" },
   { id: 2, name: "bananna", price: 1.1, size: "each", category: "fruit" },
   { id: 3, name: "grapes", price: 1.99, size: "bundle", category: "fruit" },
-  { id: 4, name: "apple", price: 0.99, size: "each", category: "fruit" },
+  { id: 4, name: "apple", price: 0.89, size: "each", category: "fruit" },
   {
     id: 5,
     name: "Dr. Pepper",
@@ -21,6 +21,37 @@ const data = [
   { id: 10, name: "Snickers", price: 1.59, size: "bar", category: "candy" },
   { id: 11, name: "Almond Joy", price: 1.69, size: "bar", category: "candy" },
 ];
+
+const state = {
+  items: data,
+  currentItem: {
+    name: "",
+    size: "",
+    price: 0,
+    category: "",
+  },
+};
+
+const changeState = (identifier) => {
+  const { id, value } = identifier;
+  setValue(id, value);
+  if (typeof id === "undefined" || id === null) {
+    return;
+  }
+
+  return {
+    ...state,
+    currentItem: {
+      ...(state.currentItem[id] = value),
+    },
+  };
+};
+
+const setValue = (identifier, value) => {
+  if (typeof value !== "undefined" && value !== null) {
+    document.getElementById(identifier).value = value;
+  }
+};
 
 // convert function to arrow function
 // function add(x, y) {
@@ -56,17 +87,18 @@ buildItemTable();
 // make immutable unique array function
 Array.prototype.unique = function (field) {
   const newArray = [];
-  //   for (var i = 0; i < this.length; i++) {
-  //     if (!newArray.includes(this[i][field])) {
-  //       newArray.push(this[i][field]);
-  //     }
+  // for (var i = 0; i < this.length; i++) {
+  //   if (!newArray.includes(this[i][field])) {
+  //     newArray.push(this[i][field]);
   //   }
-  //   this.forEach((record) => {
-  //     const value = record[field];
-  //     if (!newArray.includes(value)) {
-  //       newArray.push(value);
-  //     }
-  //   });
+  // }
+  // this.forEach((record) => {
+  //   const value = record[field];
+  //   if (!newArray.includes(value)) {
+  //     newArray.push(value);
+  //   }
+  // });
+
   this.forEach((record) => {
     const { [field]: targetedField } = record;
     if (!newArray.includes(targetedField)) {
@@ -81,18 +113,25 @@ console.log("unique categoried: ", uniqueCategories);
 
 // *******************************
 // lets look at filter
-// const filterData = (property) => {
-//   return (value) => data.filter((i) => i[property] === value);
-//   //   return function (value) {
-//   //     return data.filter((i) => i[property] === value);
-//   //   };
-// };
 
+const findApples = () => {
+  return data.filter((i) => i.name === "apple");
+};
+console.log(findApples());
+
+// dynamic filtering
 const filterData = (property) => {
-  return (value) => data.filter((i) => i[property] === value);
+  return function (value) {
+    return data.filter((i) => i[property] === value);
+  };
 };
 
+// const filterData = (property) => {
+//   return (value) => data.filter((i) => i[property] === value);
+// };
+
 // curried version of our function
+
 const curriedFilter = filterData("category");
 
 const fruits = curriedFilter("fruit");
@@ -103,8 +142,7 @@ const candy = curriedFilter("candy");
 console.log("candy", candy);
 
 const generateCategories = () => {
-  let select =
-    '<select class="form-control"><option value="">Select a Category</option>';
+  let select = `<select id="category" class="form-control" onchange="changeState(this)"><option value="0">Select a Category</option>`;
   uniqueCategories.map((category) => {
     select += `<option value="${category}">${category}</option>`;
   });
@@ -115,8 +153,67 @@ generateCategories();
 
 // lets look at reduce
 
+const getItemTotals = () => {
+  return data.reduce((acc, cur) => {
+    return acc + cur.price;
+  }, 0);
+};
+console.log("total of all items is: ", getItemTotals());
+
+const getMostExpensiveItem = () => {
+  return data.reduce((acc, cur) => {
+    if (acc.price > cur.price) {
+      return acc;
+    } else {
+      return cur;
+    }
+  }, 0);
+};
+const mostExpensive = getMostExpensiveItem();
+console.log("most expensive item is : ", mostExpensive);
+
+const getCheapestItem = () => {
+  return data.reduce((acc, cur) => {
+    if (acc.price < cur.price) {
+      return acc;
+    } else {
+      return cur;
+    }
+  }, 9999);
+};
+console.log("cheapest item is: ", getCheapestItem());
+
 // lets look at compose
 
-// lets look at rest/spread
+const findCategoryMostExpensiveItem = (array) => {
+  return array.reduce((acc, cur) => {
+    return acc.price > cur.price ? acc : cur;
+  }, 0);
+};
 
-// lets look at state management
+function pipe(...functions) {
+  return function (x) {
+    return functions.reduce((value, f) => f(value), x);
+  };
+}
+
+const compose =
+  (...fns) =>
+  (...args) =>
+    fns.reduceRight((res, fn) => [fn.call(null, ...res)], args)[0];
+
+const pipedFn = compose(
+  findCategoryMostExpensiveItem,
+  curriedFilter
+)("beverages");
+console.log("most expensive item in the beverages category");
+console.log(pipedFn);
+
+const saveItem = () => {
+  console.log("saving item", state);
+  const name = document.getElementById("name").value;
+  console.log("name", name);
+  const copiedItems = [...state.items, state.currentItem];
+  state.items = copiedItems;
+  buildItemTable();
+};
